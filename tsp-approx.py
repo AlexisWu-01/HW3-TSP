@@ -405,57 +405,25 @@ class Map:
                     self.mst.append(e)
         return
 
-    
-
     def routeMST(self):
         mst_list = []
         for edge in self.mst:
             v1,v2 = edge.vertices
             mst_list.append((v1,v2))
-        dct = dict()
-        for v1,v2 in mst_list:
-            if v1 not in dct.keys():
-                dct[v1] = [v2]
-            else:
-                dct[v1].append(v2)
-            if v2 not in dct.keys():
-                dct[v2] = [v1]
-            else:
-                dct[v2].append(v1)
         s = self.start
-        visited = set()
-        path = []
         stack = [s]
+        visited = []
         while stack:
             v = stack.pop()
             if v not in visited:
-                visited.add(v)
-            for node in dct[v]:
-                if (v,node) not in path and node not in visited:
-                    stack.append(node)
-                    path.append([v,node])
-        res = [item for sublist in path for item in sublist]
-        tour = []
-        for v in res:
-            if v not in tour:
-                tour.append(v)      
-        res = []
-        #find rank index
-        for v in tour:
-            res.append(self.adjList.index(v))
-        return res+[res[0]]
+                visited.append(v)
+            for node in v.mstN:
+                if node not in visited:
+                    stack.append(node)    
+        return [v.rank for v in visited]+[0]
 
-        # res_lst = []
-        # for v in mst_list:
-        #     if v not in res_lst:
-        #         res_lst.append(v)
-        # # res = res_lst+[res_lst[0]]
-        # res = []
-        # #find rank index
-        # for v in res_lst:
-        #     res.append(self.adjList.index(v))
-            
-        # return res + [res[0]]
+        
+        
 
     """
     getTSPApprox: uses the MST to find the approximate solution to TSP.
@@ -469,6 +437,7 @@ class Map:
         else:
             raise Exception('No MST set!')
         return
+
     def brutal(self):
         s = self.start
         cur_path = s
@@ -481,7 +450,7 @@ class Map:
         shortest = float('inf')
         ranked_routes = []
         for route in all_routes:
-            ranked_routes.append([0]+[self.adjList.index(v) for v in route]+[0])
+            ranked_routes.append([v.rank for v in route]+[0])
         for route in ranked_routes:
             dist = 0
             for i in range(len(route)-1):
@@ -767,7 +736,7 @@ def testMSTApprox():
     # Test MST approximation of Metric TSP.
     MSTws = [12,6,5999.977279,6909.105275,11810.893206,7724.194671,\
              8813.919553,39763.305768,39763.305768]
-    for ind in range(0,t):
+    for ind in range(t):
         flag_left,flag_right=False,False
 
         MSTw = MSTws[ind]
