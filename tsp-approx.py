@@ -10,6 +10,7 @@ Please don't look at it unless you are absolutely stuck, even after hours!
 
 # Import math.
 import math
+from itertools import permutations
 ################################################################################
 
 """
@@ -72,8 +73,8 @@ The cities should be denoted by their rank (their numbering in adjList).
 """
 def tsp(adjList, start):
     ##### Your implementation goes here. #####
-
-    return tour
+    pass
+    # return tour
 
 ################################################################################
 
@@ -404,27 +405,109 @@ class Map:
                     self.mst.append(e)
         return
 
+    
+
+    def routeMST(self):
+        mst_list = []
+        for edge in self.mst:
+            v1,v2 = edge.vertices
+            mst_list.append((v1,v2))
+        dct = dict()
+        for v1,v2 in mst_list:
+            if v1 not in dct.keys():
+                dct[v1] = [v2]
+            else:
+                dct[v1].append(v2)
+            if v2 not in dct.keys():
+                dct[v2] = [v1]
+            else:
+                dct[v2].append(v1)
+        s = self.start
+        visited = set()
+        path = []
+        stack = [s]
+        while stack:
+            v = stack.pop()
+            if v not in visited:
+                visited.add(v)
+            for node in dct[v]:
+                if (v,node) not in path and node not in visited:
+                    stack.append(node)
+                    path.append([v,node])
+        res = [item for sublist in path for item in sublist]
+        tour = []
+        for v in res:
+            if v not in tour:
+                tour.append(v)      
+        res = []
+        #find rank index
+        for v in tour:
+            res.append(self.adjList.index(v))
+        return res+[res[0]]
+
+        # res_lst = []
+        # for v in mst_list:
+        #     if v not in res_lst:
+        #         res_lst.append(v)
+        # # res = res_lst+[res_lst[0]]
+        # res = []
+        # #find rank index
+        # for v in res_lst:
+        #     res.append(self.adjList.index(v))
+            
+        # return res + [res[0]]
+
     """
     getTSPApprox: uses the MST to find the approximate solution to TSP.
     """
     def getTSPApprox(self):
         if len(self.mst) > 0:
-            ### TODO ###
+            self.tour = self.routeMST()
+
             # Complete the TSP Approximation method here
             # Update the Map object with the TSP Approximate tour
         else:
             raise Exception('No MST set!')
         return
+    def brutal(self):
+        s = self.start
+        cur_path = s
+        visited = set()
+        visited.add(s)
+        tmp_list = self.adjList.copy()
+        tmp_list.remove(s)
+        all_routes = list(permutations(tmp_list))
+        all_routes = all_routes[:int(math.factorial(len(self.adjList)-1)/2)]
+        shortest = float('inf')
+        ranked_routes = []
+        for route in all_routes:
+            ranked_routes.append([0]+[self.adjList.index(v) for v in route]+[0])
+        for route in ranked_routes:
+            dist = 0
+            for i in range(len(route)-1):
+                dist += self.adjMat[route[i]][route[i+1]]
+                if dist > shortest:
+                    break;
+            if dist < shortest:
+                shortest = dist
+                b_path = route
+        return b_path    
+
+
+
 
     """
     getTSPOptimal: brute-force approach to finding the optimal tour.
     """
+
     def getTSPOptimal(self):
+        self.tourOpt = self.brutal()
         ### TODO ###
         # Complete a brute-force TSP solution!
         # Replace the following two lines with an actual implementation.
-        self.tourOpt = getMap(self.mapNum)[3]
-        return None
+        # self.tourOpt = 
+
+        # return None
 
     """
     clearMap: this function will reset the MST and tour for the map, along with
@@ -667,12 +750,9 @@ def getDist(lat1,long1,lat2,long2):
 
 """
 testMSTApprox
-
 This function will test your code on the various maps using the input alg.
-
 INPUTS
 alg: 'Prim' or 'Kruskal'
-
 OUTPUTS
 s: a string indicating number of tests passed.
 """
@@ -688,6 +768,8 @@ def testMSTApprox():
     MSTws = [12,6,5999.977279,6909.105275,11810.893206,7724.194671,\
              8813.919553,39763.305768,39763.305768]
     for ind in range(0,t):
+        flag_left,flag_right=False,False
+
         MSTw = MSTws[ind]
         m = Map(ind)
         m.getMST()
@@ -746,6 +828,7 @@ def testMSTApprox():
                     flag_right = True
                 if flag_left and flag_right:
                     print("[FAILED} Test %d: Wrong TSP considering both directions of DFS traversal" % ind)
+           
                     Tflag = True
                 if (flag_left or flag_right) and not Tflag:
                     print("Test %d still passed." % ind)
@@ -760,6 +843,8 @@ def testMSTApprox():
                     flag_right = True
                 if flag_left and flag_right:
                     print("[FAILED} Test %d: Wrong TSP considering both directions of DFS traversal" % ind)
+                    print(len(m.tour))
+                    print(len(m.adjList))
                     Tflag = True
                 if (flag_left or flag_right) and not Tflag:
                     print("Test %d still passed." % ind)
@@ -773,7 +858,6 @@ def testMSTApprox():
     s = 'Passed %d/%d MST Tests and %d/%d TSP Tests.' \
         % (Mpass,t,Tpass,t)
     return s
-
 ################################################################################
 
 """
